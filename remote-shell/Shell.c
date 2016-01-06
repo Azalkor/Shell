@@ -6,6 +6,7 @@
 
 #include <stdbool.h>
 #include <stdio.h>
+#include <sys/wait.h>
 #include <readline/readline.h>
 #include <readline/history.h>
 
@@ -172,6 +173,13 @@ my_yyparse(void)
     }
 }
 
+void eliminer_zombies(){
+	int status;
+	int pid;
+	while((pid=waitpid(-1, &status, WCONTINUED))>0){
+		printf("[%d] status = %d\n",pid,WEXITSTATUS(status));
+	}
+}
 
 
       /*--------------------------------------------------------------------------------------.
@@ -233,6 +241,8 @@ main (int argc, char **argv)
     if (my_yyparse () == 0) {  /* L'analyse a abouti */   
       afficher_expr(ExpressionAnalysee);
       fflush(stdout);
+	 status=evaluer_expr(ExpressionAnalysee);
+      eliminer_zombies();
       expression_free(ExpressionAnalysee);
     }
     else {
