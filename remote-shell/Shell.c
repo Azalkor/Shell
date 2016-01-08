@@ -178,7 +178,7 @@ void eliminer_zombies(){
   int status;
   int pid;
   while((pid=waitpid(-1, &status, WNOHANG))>0){
-    printf("[%d] status = %d\n",pid,WEXITSTATUS(status));
+    printf("[%d] status = %d \n",pid,WEXITSTATUS(status));
   }
 }
 
@@ -241,11 +241,11 @@ main (int argc, char **argv)
   while (1){
     if (my_yyparse () == 0) {  /* L'analyse a abouti */   
       afficher_expr(ExpressionAnalysee);
+      eliminer_zombies();
       fflush(stdout);
       if (status=!is_interne(ExpressionAnalysee)){
 	status=evaluer_expr(ExpressionAnalysee);
       }
-      eliminer_zombies();
       expression_free(ExpressionAnalysee);
     }
     else {
