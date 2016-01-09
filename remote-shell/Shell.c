@@ -243,9 +243,7 @@ main (int argc, char **argv)
       afficher_expr(ExpressionAnalysee);
       eliminer_zombies();
       fflush(stdout);
-      if (status=!is_interne(ExpressionAnalysee)){
-	status=evaluer_expr(ExpressionAnalysee);
-      }
+      status=evaluer_expr(ExpressionAnalysee);
       expression_free(ExpressionAnalysee);
     }
     else {
