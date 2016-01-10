@@ -12,5 +12,7 @@ void my_history();
 void my_hostname();
 void my_kill(int pid, char * sig);
 void my_exit();
+void my_remote(Expression * e);
+
 
 #endif

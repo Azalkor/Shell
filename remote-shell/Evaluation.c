@@ -16,6 +16,8 @@ void verifier(int cond, char *s){
 }
 
 int evaluer_simple(Expression *e){
+  //printf("%s %s\n", e->arguments[0], e->arguments[1]);
+  fflush(stdout);
   if (execvp(e->arguments[0], e->arguments) == -1){
     //perror("exec");
     fprintf(stderr, "execution impossible \n");
@@ -34,7 +36,7 @@ int evaluer_expr(Expression *e){
     case SIMPLE :
       {
 	pid_t pid = fork();
-	verifier(pid != -1, "erreur fork \n");
+	verifier(pid != -1, "erreur fork SIMPLE \n");
 	if (pid == 0){
 	  evaluer_simple(e);
 	}

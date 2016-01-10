@@ -31,7 +31,7 @@ bool is_interne(Expression *e){
       my_exit();
     }
     else if(strcmp (e->arguments[0], "remote") == 0){
-      my_remote();
+      my_remote(e);
     }
     else
       return false ;
@@ -48,12 +48,12 @@ void my_echo(char ** args){
 }
 
 void my_date(){
-  time_t  ts = time(NULL);
+  time_t ts = time(NULL);
   struct tm * t = localtime(&ts);
   char * mois[] = {"Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
 		   "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"};
   char * jours[] = {"Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"};
-  printf("%s %d %s %d, %d:%d:%02d (UTC+0100)\n", jours[t->tm_wday], t->tm_mday, mois[t->tm_mon], 1900+t->tm_year, t->tm_hour, t->tm_min, t->tm_sec);
+  printf("%s %d %s %d, %d:%d:%02d (UTC+0100) \n", jours[t->tm_wday], t->tm_mday, mois[t->tm_mon], 1900+t->tm_year, t->tm_hour, t->tm_min, t->tm_sec);
 }
 
 void my_cd(char * arg){
@@ -96,7 +96,7 @@ void my_exit(){
   exit(0);
 }
 
-void my_remote(){
+void my_remote(Expression * e){
   if(strcmp(e->arguments[0], "all") == 0){
 
   } 
