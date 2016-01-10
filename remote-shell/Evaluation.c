@@ -1,7 +1,6 @@
 #include "Shell.h"
 #include "Evaluation.h"
 #include "Commandes_Internes.h"
-#include <unistd.h>
 #include <stdio.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -9,11 +8,8 @@
 #include <sys/types.h>
 
 
-void
-verifier(int cond, char *s)
-{
-  if (!cond)
-    {
+void verifier(int cond, char *s){
+  if (!cond){
       perror(s);
       exit(1);
     }
@@ -28,13 +24,12 @@ int evaluer_simple(Expression *e){
   exit(0);
 }
 
-int evaluer_expr(Expression *e)
-{
+int evaluer_expr(Expression *e){
   int status = 0;
   if(!is_interne(e)){
     switch(e->type){
     case VIDE :
-      printf("\n");
+      printf("\r");
       break;
     case SIMPLE :
       {
@@ -58,8 +53,7 @@ int evaluer_expr(Expression *e)
       }
       break;
     case SEQUENCE_OU :
-      {
-	/*pid_t pid = fork();
+      /*pid_t pid = fork();
 	verifier(pid != -1, "erreur fork \n");
 	if (pid == 0){
 	  if ((status = evaluer_expr(e->gauche)) != 0){
@@ -67,17 +61,19 @@ int evaluer_expr(Expression *e)
 	  }
 	  exit(0);
 	}
-	else{
+	
+	  else{
 	  waitpid(pid,&status,0);
-	  }*/ 
-	if (evaluer_expr(e->gauche) != 0){
-	  status = evaluer_expr(e->droite);
-	}
-	break;
+	  }*/
+      if (evaluer_expr(e->gauche) != 0){
+	status = evaluer_expr(e->droite);
       }
+      break;
     case REDIRECTION_A :
       {
-	if(fork()==0){
+	pid_t pid = fork();
+	verifier(pid != -1, "erreur fork REDIRECTION_A \n");		
+	if(pid == 0){
 	  int fd= open(e->arguments[0], O_CREAT | O_WRONLY | O_APPEND, 0644);
 	  dup2(fd,1);
 	  evaluer_simple(e->gauche);
@@ -90,7 +86,9 @@ int evaluer_expr(Expression *e)
       }
     case REDIRECTION_O :
       {
-	if(fork()==0){
+	pid_t pid = fork();
+	verifier(pid != -1, "erreur fork REDIRECTION_O \n");		
+	if(pid == 0){
 	  int fd= open(e->arguments[0], O_CREAT | O_WRONLY, 0644);
 	  dup2(fd,1);
 	  evaluer_simple(e->gauche);
@@ -103,7 +101,9 @@ int evaluer_expr(Expression *e)
       }
     case REDIRECTION_E :
       {
-	if(fork()==0){
+	pid_t pid = fork();
+	verifier(pid != -1, "erreur fork REDIRECTION_E \n");		
+	if(pid == 0){
 	  int fd= open(e->arguments[0], O_CREAT | O_WRONLY, 0644);
 	  dup2(fd,2);
 	  evaluer_simple(e->gauche);
@@ -116,10 +116,12 @@ int evaluer_expr(Expression *e)
       }
     case REDIRECTION_EO :
       {
-	if(fork()==0){
+	pid_t pid = fork();
+	verifier(pid != -1, "erreur fork REDIRECTION_EO \n");		
+	if(pid == 0){
 	  int fd= open(e->arguments[0], O_CREAT | O_WRONLY, 0644);
-	  dup2(fd,2);
 	  dup2(fd,1);
+	  dup2(fd,2);
 	  evaluer_simple(e->gauche);
 	  close(fd);
 	}
@@ -130,7 +132,9 @@ int evaluer_expr(Expression *e)
       }
     case REDIRECTION_I :
       {
-	if(fork()==0){
+	pid_t pid = fork();
+	verifier(pid != -1, "erreur fork REDIRECTION_I \n");		
+	if(pid == 0){
 	  int fd= open(e->arguments[0], O_CREAT | O_RDONLY, 0644);
 	  dup2(fd,0);
 	  evaluer_simple(e->gauche);
@@ -143,40 +147,46 @@ int evaluer_expr(Expression *e)
       }
     case BG :
       {
-	int pid=fork();
-	if(pid==0){
-	  printf("[%d] \n", getpid());
+	pid_t pid = fork();
+	verifier(pid != -1, "erreur fork BG \n");		
+	if(pid == 0){
+	  printf("[%d] %s démarré \n", getpid(), e->gauche->arguments[0]);
 	  evaluer_simple(e->gauche);
 	}
 	else{
-	  sleep(1); // faut voir si on peut pas faire plus court. 
+	  usleep(10);
 	}
 	break;
       }
     case PIPE :
-      {
-	if(fork()==0){
+      {	
+	pid_t pid1 = fork();
+	verifier(pid1 != -1, "erreur fork PIPE gauche \n");
+	if (pid1 == 0){
 	  int p[2];
 	  pipe(p);
-	  if(fork()==0){
+	  pid_t pid2 = fork();
+	  verifier(pid2 != -1, "erreur fork PIPE droite\n");
+	  if (pid2 == 0){
 	    dup2(p[0],0);
 	    evaluer_simple(e->droite);
 	  }
 	  else{
 	    dup2(p[1],1);
 	    evaluer_simple(e->gauche);
-	    wait(&status);
+	    waitpid(pid2,&status,0);
 	  }
 	}
 	else{
-	  wait(&status);
+	  waitpid(pid1,&status,0);
+	  usleep(10);
 	}
 	break;
       }
     case SOUS_SHELL :
       {
 	pid_t pid = fork();
-	verifier(pid != -1, "erreur fork \n");
+	verifier(pid != -1, "erreur fork SOUS_SHELL \n");
 	if (pid == 0){
 	  evaluer_expr(e->gauche);
 	  exit(0);

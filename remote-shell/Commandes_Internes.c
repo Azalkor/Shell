@@ -30,6 +30,9 @@ bool is_interne(Expression *e){
     else if(strcmp (e->arguments[0], "exit") == 0){
       my_exit();
     }
+    else if(strcmp (e->arguments[0], "remote") == 0){
+      my_remote();
+    }
     else
       return false ;
     return true;
@@ -91,4 +94,22 @@ void my_kill(int pid, char * sig){
 
 void my_exit(){
   exit(0);
+}
+
+void my_remote(){
+  if(strcmp(e->arguments[0], "all") == 0){
+
+  } 
+  else if(strcmp (e->arguments[0], "add") == 0){
+
+  }
+  else if(strcmp (e->arguments[0], "remove") == 0){
+  
+  }
+  else if(strcmp (e->arguments[0], "list") == 0){
+
+  }
+  else{
+    
+  }
 }

@@ -178,7 +178,7 @@ void eliminer_zombies(){
   int status;
   int pid;
   while((pid=waitpid(-1, &status, WNOHANG))>0){
-    printf("[%d] status = %d \n",pid,WEXITSTATUS(status));
+    printf("[%d] fini, status = %d \n", pid, WEXITSTATUS(status));
   }
 }
 
