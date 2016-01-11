@@ -1,9 +1,22 @@
 #include "Commandes_Internes.h"
+#include "Evaluation.h"
 #include <time.h>
 #include <readline/history.h>
 #include <signal.h>
+#include <stdio.h>
+#define NB_MAX_MACHINES 10
 
+typedef struct machine{
+	pid_t pid;
+	pid_t pid_xcat;
+	FILE * fdE;
+	int fdS;
+	char * nom;
+}*machine;
 
+machine machines[NB_MAX_MACHINES];
+int nbMachines=0;
+ 
 bool is_interne(Expression *e){
   if(e->type == SIMPLE){
     if(strcmp(e->arguments[0], "echo") == 0){
@@ -97,19 +110,122 @@ void my_exit(){
 }
 
 void my_remote(Expression * e){
-  if(strcmp(e->arguments[0], "all") == 0){
-
+  if(strcmp(e->arguments[1], "all") == 0){
+    remote_all(e->arguments+2);
   } 
-  else if(strcmp (e->arguments[0], "add") == 0){
-
+  else if(strcmp (e->arguments[1], "add") == 0){
+    remote_add(e->arguments+2);
   }
-  else if(strcmp (e->arguments[0], "remove") == 0){
-  
+  else if(strcmp (e->arguments[1], "remove") == 0){
+    remote_remove();
   }
-  else if(strcmp (e->arguments[0], "list") == 0){
-
+  else if(strcmp (e->arguments[1], "list") == 0){
+    remote_list();
   }
   else{
-    
+    remote_cmd(e->arguments[1],e->arguments+2);
   }
 }
+
+void remote_all(char ** args){
+  for(int i=0; i<nbMachines; i++){
+				remote_cmd(machines[i]->nom, args);
+	}
+
+}
+
+void remote_add(char ** args){
+	for (int i=nbMachines; (*args)!=NULL && i<NB_MAX_MACHINES; i++){
+		machines[i] = malloc(sizeof(struct machine));
+		int pE[2];
+		int pS[2];
+		pipe(pE);
+ 		pipe(pS);
+		pid_t pid = fork();
+ 		verifier(pid != -1, "erreur fork REMOTE_ADD \n");
+ 		if(pid == 0){
+			close(pE[1]);
+			dup2(pE[0],0);
+			close(pE[0]);
+			
+			close(pS[0]);
+			dup2(pS[1],1);
+			close(pS[1]);
+			
+			execlp("bash","bash");
+			exit(0);
+    }
+    else{
+    	machines[i]->pid=pid;
+    	machines[i]->nom=malloc(sizeof(char)*strlen(*args));
+    	strcpy(machines[i]->nom,*args);
+    	machines[i]->fdE=fdopen(pE[1],"w");
+    	machines[i]->fdS=pS[0];
+    	nbMachines++;
+    	pid_t pid_xcat = fork();
+    	verifier(pid_xcat != -1, "erreur fork xcat \n");
+ 			if(pid_xcat == 0){
+    		dup2(machines[i]->fdS, 0);
+    		execl("xcat.sh", "xcat", NULL);
+    		perror("execl xcat");
+    		exit(1);
+    	}
+    	else{
+    		machines[i]->pid_xcat=pid_xcat;
+    	}
+    }
+  args++; 
+  } 
+}
+
+void remote_remove(){
+  for(int i=0;i<nbMachines;i++){
+  	kill(machines[i]->pid,9);
+  	kill(machines[i]->pid_xcat,9);
+  	free(machines[i]->nom);
+  	free(machines[i]);
+  	machines[i]=NULL;
+  }
+  nbMachines=0;
+  
+}
+
+void remote_list(){
+  for(int i=0;i<NB_MAX_MACHINES;i++){
+  	if(machines[i]!=NULL){
+  		printf("[%d] %s\n",machines[i]->pid, machines[i]->nom);
+  	}
+  }
+}
+
+void remote_cmd(char * m, char ** args){
+	for(int i=0;i<nbMachines;i++){
+		if(strcmp(m, machines[i]->nom)==0){
+			while(*args !=NULL){
+				fwrite(*(args),1,strlen(*(args)),machines[i]->fdE);
+				fwrite(" ",1,1,machines[i]->fdE);
+				args++;
+			}
+			fwrite("\n",1,1,machines[i]->fdE);
+			fflush(NULL);
+		}
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

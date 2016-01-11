@@ -13,6 +13,14 @@ void my_hostname();
 void my_kill(int pid, char * sig);
 void my_exit();
 void my_remote(Expression * e);
+void remote_all(char ** args);
+void remote_add(char ** args);
+void remote_remove();
+void remote_list();
+void remote_cmd(char * m, char ** args);
+
+
+
 
 
 #endif

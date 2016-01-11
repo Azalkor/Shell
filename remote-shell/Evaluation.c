@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <sys/wait.h>
 #include <sys/types.h>
 
 
@@ -17,7 +16,7 @@ void verifier(int cond, char *s){
 
 int evaluer_simple(Expression *e){
   //printf("%s %s\n", e->arguments[0], e->arguments[1]);
-  fflush(stdout);
+  //fflush(stdout);
   if (execvp(e->arguments[0], e->arguments) == -1){
     //perror("exec");
     fprintf(stderr, "execution impossible \n");
