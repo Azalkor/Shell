@@ -232,12 +232,7 @@ main (int argc, char **argv)
   if (interactive_mode)
     {
       using_history();
-    }
-  else
-    {
-      //  mode distant 
-    }
-  
+    } 
   while (1){
     if (my_yyparse () == 0) {  /* L'analyse a abouti */   
       afficher_expr(ExpressionAnalysee);
@@ -245,9 +240,6 @@ main (int argc, char **argv)
       fflush(stdout);
       status=evaluer_expr(ExpressionAnalysee);
       expression_free(ExpressionAnalysee);
-    }
-    else {
-      /* L'analyse de la ligne de commande a donné une erreur */
     }
   }
   return 0;

@@ -20,7 +20,4 @@ void remote_list();
 void remote_cmd(char * m, char ** args);
 
 
-
-
-
 #endif

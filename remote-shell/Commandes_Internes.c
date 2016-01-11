@@ -7,15 +7,15 @@
 #define NB_MAX_MACHINES 10
 
 typedef struct machine{
-	pid_t pid;
-	pid_t pid_xcat;
-	FILE * fdE;
-	int fdS;
-	char * nom;
+  pid_t pid;
+  pid_t pid_xcat;
+  FILE * fdE;
+  int fdS;
+  char * nom;
 }*machine;
 
 machine machines[NB_MAX_MACHINES];
-int nbMachines=0;
+int nbMachines = 0;
  
 bool is_interne(Expression *e){
   if(e->type == SIMPLE){
@@ -89,7 +89,7 @@ void my_history(){
   for(int i =0; i<hs->length; i++){
     HIST_ENTRY * he = hs->entries[i];
     printf("%d %s \n", i+1, he->line);
-    }
+  }
 }
 
 void my_hostname(){
@@ -129,87 +129,88 @@ void my_remote(Expression * e){
 
 void remote_all(char ** args){
   for(int i=0; i<nbMachines; i++){
-				remote_cmd(machines[i]->nom, args);
-	}
-
+    remote_cmd(machines[i]->nom, args);
+  }
 }
 
 void remote_add(char ** args){
-	for (int i=nbMachines; (*args)!=NULL && i<NB_MAX_MACHINES; i++){
-		machines[i] = malloc(sizeof(struct machine));
-		int pE[2];
-		int pS[2];
-		pipe(pE);
- 		pipe(pS);
-		pid_t pid = fork();
- 		verifier(pid != -1, "erreur fork REMOTE_ADD \n");
- 		if(pid == 0){
-			close(pE[1]);
-			dup2(pE[0],0);
-			close(pE[0]);
+  for (int i=nbMachines; (*args)!=NULL && i<NB_MAX_MACHINES; i++){
+    machines[i] = malloc(sizeof(struct machine));
+    verifier(machines[i]!=NULL, "erreur malloc machines \n");
+    int pE[2]; //pipe entrée
+    int pS[2]; //pipe sortie
+    pipe(pE);
+    pipe(pS);
+    pid_t pid = fork();
+    verifier(pid != -1, "erreur fork REMOTE_ADD \n");
+    if(pid == 0){
+      close(pE[1]);
+      dup2(pE[0],0);
+      close(pE[0]);
 			
-			close(pS[0]);
-			dup2(pS[1],1);
-			close(pS[1]);
+      close(pS[0]);
+      dup2(pS[1],1);
+      close(pS[1]);
 			
-			execlp("bash","bash");
-			exit(0);
+      execlp("./Shell","./Shell");
+      exit(0);
     }
     else{
-    	machines[i]->pid=pid;
-    	machines[i]->nom=malloc(sizeof(char)*strlen(*args));
-    	strcpy(machines[i]->nom,*args);
-    	machines[i]->fdE=fdopen(pE[1],"w");
-    	machines[i]->fdS=pS[0];
-    	nbMachines++;
-    	pid_t pid_xcat = fork();
-    	verifier(pid_xcat != -1, "erreur fork xcat \n");
- 			if(pid_xcat == 0){
-    		dup2(machines[i]->fdS, 0);
-    		execl("xcat.sh", "xcat", NULL);
-    		perror("execl xcat");
-    		exit(1);
-    	}
-    	else{
-    		machines[i]->pid_xcat=pid_xcat;
-    	}
+      machines[i]->pid = pid;
+      machines[i]->nom = malloc(sizeof(char)*strlen(*args));
+      verifier(machines[i]!=NULL, "erreur malloc nom \n");
+      strcpy(machines[i]->nom,*args);
+      machines[i]->fdE = fdopen(pE[1],"w");
+      verifier(machines[i]!=NULL, "erreur fdopen fdE \n");
+      machines[i]->fdS = pS[0];
+      nbMachines++;
+      pid_t pid_xcat = fork();
+      verifier(pid_xcat != -1, "erreur fork XCAT \n");
+      if(pid_xcat == 0){
+	dup2(machines[i]->fdS, 0);
+	execl("xcat.sh", "xcat", NULL);
+	perror("execl xcat");
+	exit(1);
+      }
+      else{
+	machines[i]->pid_xcat = pid_xcat;
+      }
     }
-  args++; 
+    args++; 
   } 
 }
 
 void remote_remove(){
   for(int i=0;i<nbMachines;i++){
-  	kill(machines[i]->pid,9);
-  	kill(machines[i]->pid_xcat,9);
-  	free(machines[i]->nom);
-  	free(machines[i]);
-  	machines[i]=NULL;
+    kill(machines[i]->pid,9);
+    kill(machines[i]->pid_xcat,9);
+    free(machines[i]->nom);
+    free(machines[i]);
+    machines[i]=NULL;
   }
   nbMachines=0;
-  
 }
 
 void remote_list(){
   for(int i=0;i<NB_MAX_MACHINES;i++){
-  	if(machines[i]!=NULL){
-  		printf("[%d] %s\n",machines[i]->pid, machines[i]->nom);
-  	}
+    if(machines[i] != NULL){
+      printf("[%d] %s \n",machines[i]->pid, machines[i]->nom);
+    }
   }
 }
 
 void remote_cmd(char * m, char ** args){
-	for(int i=0;i<nbMachines;i++){
-		if(strcmp(m, machines[i]->nom)==0){
-			while(*args !=NULL){
-				fwrite(*(args),1,strlen(*(args)),machines[i]->fdE);
-				fwrite(" ",1,1,machines[i]->fdE);
-				args++;
-			}
-			fwrite("\n",1,1,machines[i]->fdE);
-			fflush(NULL);
-		}
-	}
+  for(int i=0;i<nbMachines;i++){
+    if(strcmp(m, machines[i]->nom)==0){
+      while(*args != NULL){
+	fwrite(*(args), 1, strlen(*(args)), machines[i]->fdE);
+	fwrite(" ", 1, 1, machines[i]->fdE);
+	args++;
+      }
+      fwrite("\n", 1, 1, machines[i]->fdE);
+      fflush(NULL);
+    }
+  }
 }
 
 

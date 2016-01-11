@@ -15,10 +15,7 @@ void verifier(int cond, char *s){
 }
 
 int evaluer_simple(Expression *e){
-  //printf("%s %s\n", e->arguments[0], e->arguments[1]);
-  //fflush(stdout);
   if (execvp(e->arguments[0], e->arguments) == -1){
-    //perror("exec");
     fprintf(stderr, "execution impossible \n");
     exit(-1);
   }
@@ -54,18 +51,6 @@ int evaluer_expr(Expression *e){
       }
       break;
     case SEQUENCE_OU :
-      /*pid_t pid = fork();
-	verifier(pid != -1, "erreur fork \n");
-	if (pid == 0){
-	  if ((status = evaluer_expr(e->gauche)) != 0){
-	    status = evaluer_expr(e->droite);
-	  }
-	  exit(0);
-	}
-	
-	  else{
-	  waitpid(pid,&status,0);
-	  }*/
       if (evaluer_expr(e->gauche) != 0){
 	status = evaluer_expr(e->droite);
       }
@@ -75,7 +60,8 @@ int evaluer_expr(Expression *e){
 	pid_t pid = fork();
 	verifier(pid != -1, "erreur fork REDIRECTION_A \n");		
 	if(pid == 0){
-	  int fd= open(e->arguments[0], O_CREAT | O_WRONLY | O_APPEND, 0644);
+	  int fd = open(e->arguments[0], O_CREAT | O_WRONLY | O_APPEND, 0644);
+	  verifier(fd != -1, "erreur open REDIRECTION_A \n");
 	  dup2(fd,1);
 	  evaluer_simple(e->gauche);
 	  close(fd);
@@ -91,6 +77,7 @@ int evaluer_expr(Expression *e){
 	verifier(pid != -1, "erreur fork REDIRECTION_O \n");		
 	if(pid == 0){
 	  int fd= open(e->arguments[0], O_CREAT | O_WRONLY, 0644);
+	  verifier(fd != -1, "erreur open REDIRECTION_O \n");
 	  dup2(fd,1);
 	  evaluer_simple(e->gauche);
 	  close(fd);
@@ -106,6 +93,7 @@ int evaluer_expr(Expression *e){
 	verifier(pid != -1, "erreur fork REDIRECTION_E \n");		
 	if(pid == 0){
 	  int fd= open(e->arguments[0], O_CREAT | O_WRONLY, 0644);
+	  verifier(fd != -1, "erreur open REDIRECTION_E \n");
 	  dup2(fd,2);
 	  evaluer_simple(e->gauche);
 	  close(fd);
@@ -121,6 +109,7 @@ int evaluer_expr(Expression *e){
 	verifier(pid != -1, "erreur fork REDIRECTION_EO \n");		
 	if(pid == 0){
 	  int fd= open(e->arguments[0], O_CREAT | O_WRONLY, 0644);
+	  verifier(fd != -1, "erreur open REDIRECTION_EO \n");
 	  dup2(fd,1);
 	  dup2(fd,2);
 	  evaluer_simple(e->gauche);
@@ -137,6 +126,7 @@ int evaluer_expr(Expression *e){
 	verifier(pid != -1, "erreur fork REDIRECTION_I \n");		
 	if(pid == 0){
 	  int fd= open(e->arguments[0], O_CREAT | O_RDONLY, 0644);
+	  verifier(fd != -1, "erreur open REDIRECTION_I \n");
 	  dup2(fd,0);
 	  evaluer_simple(e->gauche);
 	  close(fd);
@@ -155,7 +145,7 @@ int evaluer_expr(Expression *e){
 	  evaluer_simple(e->gauche);
 	}
 	else{
-	  usleep(10);
+	  usleep(10); //pause de 10ms pour forcer l'ordonnancement de l'affichage
 	}
 	break;
       }
